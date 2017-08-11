@@ -47,6 +47,27 @@ class MongodbClient(object):
                 logger.log_to_file('MongoError.log', e.reason.strerror)
                 self.__client.close()
 
+    def update_one_record(self,keyfield,document,*collectionname):
+        if not (isinstance(keyfield,dict) and isinstance(document,dict)):
+            raise TypeError('keyself and document should be dict')
+        else:
+            try:
+                if collectionname ==():
+                    if self.__collectionname =='':
+                        raise BaseException('colllection name should be set using set_collection_name')
+                    else:
+                        collection = self.__client[self.__dbname][self.__collectionname]
+                else:
+                    collection = self.__client[self.__dbname][collectionname[0]]
+                collection.update(keyfield,
+                                  {'set':document},
+                                  upsert=True,
+                                  multi=True
+                                  )
+            except errors as e:
+                logger.log_to_file('MongoError.log', e.reason.strerror)
+                self.__client.close()
+
     def close_bd(self):
         self.__client.close()
 

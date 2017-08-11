@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/PropertyViewAU.iml" filepath="$PROJECT_DIR$/.idea/PropertyViewAU.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PropertyDataAU.iml" filepath="$PROJECT_DIR$/.idea/PropertyDataAU.iml" />
+      <module fileurl="file://C:\Users\elvisadmin\PycharmProjects\PropertyDataAU\.idea\PropertyViewAU.iml" filepath="C:\Users\elvisadmin\PycharmProjects\PropertyDataAU\.idea\PropertyViewAU.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../PythonSamples/.idea/PythonSamples.iml" filepath="$PROJECT_DIR$/../PythonSamples/.idea/PythonSamples.iml" />
     </modules>
   </component>
 </project>

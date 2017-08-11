@@ -25,6 +25,7 @@ class SoldhouseCrawler():
         self.__proxy_enabled = proxy_enable
         self.__crawler = basecrawler.BaseCrawler(self.__crawl_url,self.__proxy_enabled)
 
+    #generate the query string of the search data for http://house.ksou.cn/p.php
     def __generate_query_string(self,query,page,region,state):
         Query_String = {}
         Query_String['q'] = query
@@ -56,36 +57,43 @@ class SoldhouseCrawler():
         detail_tag = addr_tag.parent.parent.next_sibling
         # find detail info in the currnet page
 
-        # Get Address
-        _house_info['Addr'] = addr_tag.text
+        # Get Address sample "37 Clendon Road, Toorak"
+        _house_info['Addr'] = addr_tag.text.split(',')[0]
 
-        # Get Sold Price
+        # Get Sold Price sample Sold $8,790,000 unit AU dollar
         if detail_tag.find(text=re.compile('Sold')):
-            _house_info['SoldPrice'] = detail_tag.find(text=re.compile('Sold'))
+            _house_info['SoldPrice'] = detail_tag.find(text=re.compile('Sold'))[6:]
         else:
             _house_info['SoldPrice'] = 'null'
-        # Get Sold Date
+        # Get Sold Date sample in Jun 2017(Auction)
         if detail_tag.find(text=re.compile('Sold')):
-            _house_info['SoldDate'] = detail_tag.find(text=re.compile('Sold')).parent.next_sibling
+            _house_info['SoldDate'] = detail_tag.find(text=re.compile('Sold')).parent.next_sibling[3:].replace('(Auction)',
+                                                                                                          '')[:-1]
         else:
             _house_info['SoldDate'] = 'null'
-        # Get Last Sold Price
+        # Get Last Sold Price sample " $1,505,000 in Oct 1997"
         if detail_tag.find(text=re.compile('Last Sold')):
-            _house_info['LastSold'] = detail_tag.find(text=re.compile('Last Sold')).parent.next_sibling
+            _sl = detail_tag.find(text=re.compile('Last Sold')).parent.next_sibling
+            _house_info['LastSoldPrice'] = _sl.split('in')[0][2:-1]
+            _house_info['LastSoldDate'] = _sl.split('in')[1][1:].replace('(Auction)', '')
         else:
-            _house_info['LastSold'] = 'null'
+            _house_info['LastSoldPrice'] = 'null'
+            _house_info['LastSoldDate'] = 'null'
         # Get Rent Price
         if detail_tag.find(text=re.compile('Rent')):
             if detail_tag.find(text=re.compile('Rent')).parent.parent.find('a'):
-                _house_info['RentPrice'] = detail_tag.find(text=re.compile('Rent')).parent.parent.a.string  # with Rent link
+                _rp = detail_tag.find(text=re.compile('Rent')).parent.parent.a.string  # with Rent link
             else:
-                _house_info['RentPrice'] = detail_tag.find(
+                _rp = detail_tag.find(
                     text=re.compile('Rent')).parent.next_sibling  # <td><b>Rent</b> $1,150pw in Jun 2014</td>
+            _house_info['RentPrice'] = _rp.split('in')[0][1:-3]
+            _house_info['RentDate'] = _rp.split('in')[1][1:]
         else:
             _house_info['RentPrice'] = 'null'
+            _house_info['RentDate'] = 'null'
         # get property type
         if detail_tag.find(text=re.compile('Apartment|Unit|House')):
-            _house_info['Type'] = detail_tag.find(text=re.compile('Apartment|Unit|House'))
+            _house_info['Type'] = detail_tag.find(text=re.compile('Apartment|Unit|House'))[:-1]
         else:
             _house_info['Type'] = 'null'
         # get Bed Room Number
@@ -105,8 +113,8 @@ class SoldhouseCrawler():
             _house_info['CarSpace'] = '0'
         # Get Land Size
         if detail_tag.find(text=re.compile('Land size:')):
-            _house_info['LandSize'] = detail_tag.find(text=re.compile('Land size:')).parent.next_sibling
-            if _house_info['LandSize'] == ' \xa0':
+            _house_info['LandSize'] = detail_tag.find(text=re.compile('Land size:')).parent.next_sibling[:-4]
+            if _house_info['LandSize'] == '':
                 _house_info['LandSize'] = 'null'
         else:
             _house_info['LandSize'] = 'null'
@@ -124,11 +132,14 @@ class SoldhouseCrawler():
                 _house_info['Agent'] = detail_tag.find(text=re.compile('Agent')).parent.next_sibling
         else:
             _house_info['Agent'] = 'null'
-        # get distance to cbd
+        # get distance to cbd sample 5.3 km to CBD; 825 metres to Heyington Station, unit meters
         if detail_tag.find(text=re.compile('Distance')):
-            _house_info['Distance'] = detail_tag.find(text=re.compile('Distance')).parent.next_sibling
+            _dist = detail_tag.find(text=re.compile('Distance')).parent.next_sibling
+            _house_info['Distance2CBD'] = _dist.split(';')[0].split('to')[0][:-1]
+            _house_info['Distance2Stat'] = _dist.split(';')[1].split('to')[0][:-1]
         else:
-            _house_info['Distance'] = 'null'
+            _house_info['Distance2CBD'] = 'null'
+            _house_info['Distance2Stat'] = 'null'
 
 
     def crawl_sold_house(self,state):
