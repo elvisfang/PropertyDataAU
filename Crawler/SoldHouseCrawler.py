@@ -141,6 +141,8 @@ class SoldhouseCrawler():
             _house_info['Distance2CBD'] = 'null'
             _house_info['Distance2Stat'] = 'null'
 
+        #return one house info
+        return _house_info
 
     def crawl_sold_house(self,state):
         _region_list = self.__crawler.load_region_list(state)
@@ -152,6 +154,8 @@ class SoldhouseCrawler():
                 for addr in _bs_searchresult.find_all('span', class_='addr'):
                     _crawler.crawl_url = addr.a.get('href')[5:]
                     _bs_detailinfo = _crawler.crawl_data()
+                    _house_data = self.__absctract_house_info(_bs_detailinfo)
+                    #TODO save data to mongodb
 
 
 
