@@ -67,15 +67,14 @@ class SoldhouseCrawler():
             _house_info['SoldPrice'] = 'null'
         # Get Sold Date sample in Jun 2017(Auction)
         if detail_tag.find(text=re.compile('Sold')):
-            _house_info['SoldDate'] = detail_tag.find(text=re.compile('Sold')).parent.next_sibling[3:].replace('(Auction)',
-                                                                                                          '')[:-1]
+            _house_info['SoldDate'] = detail_tag.find(text=re.compile('Sold')).parent.next_sibling[3:].replace('(Auction)','').strip()
         else:
             _house_info['SoldDate'] = 'null'
         # Get Last Sold Price sample " $1,505,000 in Oct 1997"
         if detail_tag.find(text=re.compile('Last Sold')):
             _sl = detail_tag.find(text=re.compile('Last Sold')).parent.next_sibling
-            _house_info['LastSoldPrice'] = _sl.split('in')[0][2:-1]
-            _house_info['LastSoldDate'] = _sl.split('in')[1][1:].replace('(Auction)', '')
+            _house_info['LastSoldPrice'] = _sl.split('in')[0].strip()[1:]
+            _house_info['LastSoldDate'] = _sl.split('in')[1].replace('(Auction)','').strip()
         else:
             _house_info['LastSoldPrice'] = 'null'
             _house_info['LastSoldDate'] = 'null'
@@ -86,8 +85,8 @@ class SoldhouseCrawler():
             else:
                 _rp = detail_tag.find(
                     text=re.compile('Rent')).parent.next_sibling  # <td><b>Rent</b> $1,150pw in Jun 2014</td>
-            _house_info['RentPrice'] = _rp.split('in')[0][1:-3]
-            _house_info['RentDate'] = _rp.split('in')[1][1:]
+            _house_info['RentPrice'] = _rp.split('in')[0].strip()[1:-2]
+            _house_info['RentDate'] = _rp.split('in')[1].strip()
         else:
             _house_info['RentPrice'] = 'null'
             _house_info['RentDate'] = 'null'
@@ -113,11 +112,18 @@ class SoldhouseCrawler():
             _house_info['CarSpace'] = '0'
         # Get Land Size
         if detail_tag.find(text=re.compile('Land size:')):
-            _house_info['LandSize'] = detail_tag.find(text=re.compile('Land size:')).parent.next_sibling[:-4]
+            _house_info['LandSize'] = detail_tag.find(text=re.compile('Land size:')).parent.next_sibling.split('sqm')[0].strip()
             if _house_info['LandSize'] == '':
                 _house_info['LandSize'] = 'null'
         else:
             _house_info['LandSize'] = 'null'
+        # get building size
+        if detail_tag.find(text=re.compile('Building size:')):
+            _house_info['BuildingSize'] = detail_tag.find(text=re.compile('Building size:')).parent.next_sibling.split('sqm')[0].strip()
+            if _house_info['BuildingSize'] == '':
+                _house_info['BuildingSize'] = 'null'
+        else:
+            _house_info['BuildingSize'] = 'null'
         # get Build Year
         if detail_tag.find(text=re.compile('Build year:')):
             _house_info['BuildYear'] = detail_tag.find(text=re.compile('Build year:')).parent.next_sibling
@@ -127,16 +133,16 @@ class SoldhouseCrawler():
         if detail_tag.find(text=re.compile('Agent')):
             # <td><b>Agent:</b> <a href="http://www.ksouhouse.com/agent.php?id=21225&amp;name=Rodney+Morley+Pty+Ltd+-" title="View more about this realestate agent">Rodney Morley Pty Ltd -</a></td>
             if detail_tag.find(text=re.compile('Agent')).parent.parent.find('a'):
-                _house_info['Agent'] = detail_tag.find(text=re.compile('Agent')).parent.parent.a.string
+                _house_info['Agent'] = detail_tag.find(text=re.compile('Agent')).parent.parent.a.string.strip()
             else:  # <td><b>Agent:</b> hockingstuart  Armadale</td>
-                _house_info['Agent'] = detail_tag.find(text=re.compile('Agent')).parent.next_sibling
+                _house_info['Agent'] = detail_tag.find(text=re.compile('Agent')).parent.next_sibling.strip()
         else:
             _house_info['Agent'] = 'null'
         # get distance to cbd sample 5.3 km to CBD; 825 metres to Heyington Station, unit meters
         if detail_tag.find(text=re.compile('Distance')):
             _dist = detail_tag.find(text=re.compile('Distance')).parent.next_sibling
-            _house_info['Distance2CBD'] = _dist.split(';')[0].split('to')[0][:-1]
-            _house_info['Distance2Stat'] = _dist.split(';')[1].split('to')[0][:-1]
+            _house_info['Distance2CBD'] = _dist.split(';')[0].split('to')[0].strip()
+            _house_info['Distance2Stat'] = _dist.split(';')[1].split('to')[0].strip()
         else:
             _house_info['Distance2CBD'] = 'null'
             _house_info['Distance2Stat'] = 'null'
