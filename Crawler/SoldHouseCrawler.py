@@ -153,11 +153,14 @@ class SoldhouseCrawler():
         #return one house info
         return _house_info
 
-    def crawl_sold_house(self,state,mode='CONTINUE'):
+    def crawl_sold_house(self,state,mode='CONTINUE',excluderegion=''):
         _region_list = self.__crawler.load_region_list(state)
+        _excludelist = excluderegion
         _crawler = basecrawler.BaseCrawler()
         _mongoclient = MongoDBClient.MongodbClient('PropertyDetails')
         for _region in _region_list:
+            if _region in _excludelist:
+                continue
             for i in range(30):
                 _query = self.__generate_query_string(_region,i,_region,state)
                 _bs_searchresult = self.__crawler.crawl_data(**_query)
@@ -173,17 +176,19 @@ class SoldhouseCrawler():
                             _house_data['URL'] = self.__crawl_url + addr.a.get('href')[5:]
                             #save data to mongodb
                             _mongoclient.update_one_record({'Addr':_house_data['Addr']},_house_data,'PropertyDetails')
-                            # sleep 2 second
-                            time.sleep(2)
+                            # sleep 5 second
+                            time.sleep(5)
                             print('save data' + _house_data['URL'])
                         else:
                             print(_crawler.crawl_url + 'existed')
                     except BaseException as e:
                         logger.log_to_file('SoldHouseCrawler.log', 'error when processing '+ _crawler.crawl_url +'err: ' + str(e))
-                time.sleep(10)
+                #time.sleep(10)
         _mongoclient.close_bd()
 
 
 if __name__ =='__main__':
     _crawler1 = SoldhouseCrawler()
-    _crawler1.crawl_sold_house('vic',mode='CONTINUE')
+    _crawler1.crawl_sold_house('vic',mode='CONTINUE',excluderegion='Abbotsford')
+    #TODO exclude regions if 300 entries are existed in CONTINUE Mode, and how to process crawler in different mode
+    #TODO using proxy and change IP address when error occures

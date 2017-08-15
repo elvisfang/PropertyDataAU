@@ -17,5 +17,6 @@ import time
 
 def log_to_file(filename,str):
     _logfile = open(filename,'a',encoding='utf-8')
+    print(str)
     _logfile.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ':' +str)
     _logfile.close()

@@ -57,16 +57,17 @@ class BaseCrawler(object):
         # define Head
         _head = {}
         _head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
-        _head['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
-        _head['Accept-Encoding']= 'gzip, deflate'
-        _head['Accept-Language']='zh-CN,zh;q=0.8'
-        _head['Cache-Control']='max-age=0'
-        _head['Connection']='keep-alive'
-        _head['Host'] = 'house.ksou.cn'
-        _head['Upgrade-Insecure-Requests'] = '1'
-        _head['Cookie']='u=0815130798178353; __utmt=1; c_sta=vic; __utma=119194128.1000365510.1500881922.1502697441.1502761970.10; __utmb=119194128.22.10.1502761970; __utmc=119194128; __utmz=119194128.1500881923.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
+        # _head['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        # _head['Accept-Encoding']= 'gzip, deflate'
+        # _head['Accept-Language']='zh-CN,zh;q=0.8'
+        # _head['Cache-Control']='max-age=0'
+        # _head['Connection']='keep-alive'
+        # _head['Host'] = 'house.ksou.cn'
+        # _head['Upgrade-Insecure-Requests'] = '1'
+        #_head['Cookie']='u=0815130798178353; __utmt=1; c_sta=vic; __utma=119194128.1000365510.1500881922.1502697441.1502761970.10; __utmb=119194128.22.10.1502761970; __utmc=119194128; __utmz=119194128.1500881923.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
 
         _target_req = request.Request(url=self.__crawl_url, headers=_head)
+        _sleep = 200
         _loop = True
         _loop_counter = 0
         while(_loop) :
@@ -80,9 +81,10 @@ class BaseCrawler(object):
                 logger.log_to_file('CrawlerError.log','Basecrawler HTTPError:' + str(e.code) + ' processing:' + _target_req.full_url +'\n')
                 if e.code== 503:
                     _loop_counter +=1
-                    time.sleep(60)
-                    if _loop_counter >=20:
-                        logger.log_to_file('CrawlerError.log','Basecrawler Error 503 >20 times')
+                    logger.log_to_file('CrawlerError.log', 'Basecrawler Sleep:' + str(_sleep) + 's processing:' + _target_req.full_url + '\n')
+                    time.sleep(_sleep)
+                    if _loop_counter >=10:
+                        logger.log_to_file('CrawlerError.log','Basecrawler Error 503 >10 times')
                         break
                     continue
             except error.URLError as e:
@@ -93,9 +95,10 @@ class BaseCrawler(object):
                 soup = BeautifulSoup(_target_html, 'lxml')
                 if not isinstance(soup,BeautifulSoup):
                     _loop_counter +=1
-                    time.sleep(60)
-                    if _loop_counter >=20:
-                        logger.log_to_file('CrawlerError.log', 'Basecrawler Error no beautifulsoup >20 times')
+                    logger.log_to_file('CrawlerError.log','Basecrawler Sleep:' + str(_sleep) + 's processing:' + _target_req.full_url + '\n')
+                    time.sleep(_sleep)
+                    if _loop_counter >=10:
+                        logger.log_to_file('CrawlerError.log', 'Basecrawler Error no beautifulsoup >10 times')
                         break
                     continue
                 else:
