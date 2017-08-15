@@ -12,9 +12,12 @@
 """
 __author__ = 'elvisfang'
 
-from . import basecrawler
+import basecrawler
+import time
+from Database import MongoDBClient
 from bs4 import BeautifulSoup
 import re
+from Log import logger
 
 class SoldhouseCrawler():
 
@@ -50,7 +53,7 @@ class SoldhouseCrawler():
 
     def __absctract_house_info(self,bs):
         if not isinstance(bs,BeautifulSoup):
-            raise TypeError('bs must be bs4.BeautifulSoup')
+            raise TypeError('bs must be bs4.BeautifulSoup, now: ' + type(bs))
 
         _house_info = {}
         addr_tag = bs.find('span', class_='addr')
@@ -150,18 +153,37 @@ class SoldhouseCrawler():
         #return one house info
         return _house_info
 
-    def crawl_sold_house(self,state):
+    def crawl_sold_house(self,state,mode='CONTINUE'):
         _region_list = self.__crawler.load_region_list(state)
         _crawler = basecrawler.BaseCrawler()
+        _mongoclient = MongoDBClient.MongodbClient('PropertyDetails')
         for _region in _region_list:
             for i in range(30):
                 _query = self.__generate_query_string(_region,i,_region,state)
                 _bs_searchresult = self.__crawler.crawl_data(**_query)
                 for addr in _bs_searchresult.find_all('span', class_='addr'):
-                    _crawler.crawl_url = addr.a.get('href')[5:]
-                    _bs_detailinfo = _crawler.crawl_data()
-                    _house_data = self.__absctract_house_info(_bs_detailinfo)
-                    #TODO save data to mongodb
+                    _crawler.crawl_url = self.__crawl_url + addr.a.get('href')[5:]
+                    try:
+                        if mode == 'FULL' or \
+                                (mode == 'CONTINUE' and (not _mongoclient.get_one_value_by_key({'URL':_crawler.crawl_url}))):
+                            _bs_detailinfo = _crawler.crawl_data()
+                            _house_data = self.__absctract_house_info(_bs_detailinfo)
+                            _house_data['State'] = state
+                            _house_data['Region'] = _region
+                            _house_data['URL'] = self.__crawl_url + addr.a.get('href')[5:]
+                            #save data to mongodb
+                            _mongoclient.update_one_record({'Addr':_house_data['Addr']},_house_data,'PropertyDetails')
+                            # sleep 2 second
+                            time.sleep(2)
+                            print('save data' + _house_data['URL'])
+                        else:
+                            print(_crawler.crawl_url + 'existed')
+                    except BaseException as e:
+                        logger.log_to_file('SoldHouseCrawler.log', 'error when processing '+ _crawler.crawl_url +'err: ' + str(e))
+                time.sleep(10)
+        _mongoclient.close_bd()
 
 
-
+if __name__ =='__main__':
+    _crawler1 = SoldhouseCrawler()
+    _crawler1.crawl_sold_house('vic',mode='CONTINUE')

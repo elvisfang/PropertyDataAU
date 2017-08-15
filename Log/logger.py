@@ -16,6 +16,6 @@ __author__ = 'elvisfang'
 import time
 
 def log_to_file(filename,str):
-    _logfile = open(filename,'a',str,encoding='utf-8')
+    _logfile = open(filename,'a',encoding='utf-8')
     _logfile.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + ':' +str)
     _logfile.close()

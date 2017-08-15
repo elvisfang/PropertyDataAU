@@ -43,7 +43,7 @@ class MongodbClient(object):
                 else:
                     collection = self.__client[self.__dbname][collectionname[0]]
                 return collection.find_one(filter)
-            except errors as e:
+            except errors.PyMongoError as e:
                 logger.log_to_file('MongoError.log', e.reason.strerror)
                 self.__client.close()
 
@@ -60,11 +60,11 @@ class MongodbClient(object):
                 else:
                     collection = self.__client[self.__dbname][collectionname[0]]
                 collection.update(keyfield,
-                                  {'set':document},
+                                  {'$set':document},
                                   upsert=True,
                                   multi=True
                                   )
-            except errors as e:
+            except errors.PyMongoError as e:
                 logger.log_to_file('MongoError.log', e.reason.strerror)
                 self.__client.close()
 
