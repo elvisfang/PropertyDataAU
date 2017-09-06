@@ -30,9 +30,11 @@ def IPspider(numpage):
             try:
                 _tempip = {}
                 _tds = item.find_all('td')
-                _tempip['IP'] = _tds[1].text  # .text.encode('utf-8'))
-                _tempip['Port'] = _tds[2].text  # .text.encode('utf-8'))
-                _mongoclient.update_one_record({'IP': _tempip['IP']}, _tempip, 'IPPool')
+                if _tds:
+                    _tempip['IP'] = _tds[1].text
+                    _tempip['Port'] = _tds[2].text
+                    _tempip['Tpye']=_tds[5].text
+                    _mongoclient.update_one_record({'IP': _tempip['IP']}, _tempip, 'IPPool')
             except BaseException as e:
                 logger.log_to_file('ProxySpider.log','error when processing ' + _crawler.crawl_url + 'err: ' + str(e))
 
