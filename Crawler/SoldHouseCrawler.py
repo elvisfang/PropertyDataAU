@@ -157,6 +157,7 @@ class SoldhouseCrawler():
         _region_list = self.__crawler.load_region_list(state)
         _excludelist = excluderegion
         _crawler = basecrawler.BaseCrawler()
+        _crawler.proxy_enabled = True
         _mongoclient = MongoDBClient.MongodbClient('PropertyDetails')
         for _region in _region_list:
             if _region in _excludelist:
@@ -176,8 +177,8 @@ class SoldhouseCrawler():
                             _house_data['URL'] = self.__crawl_url + addr.a.get('href')[5:]
                             #save data to mongodb
                             _mongoclient.update_one_record({'Addr':_house_data['Addr']},_house_data,'PropertyDetails')
-                            # sleep 5 second
-                            time.sleep(5)
+                            # sleep 2 second
+                            time.sleep(2)
                             print('save data' + _house_data['URL'])
                         else:
                             print(_crawler.crawl_url + 'existed')
@@ -189,6 +190,6 @@ class SoldhouseCrawler():
 
 if __name__ =='__main__':
     _crawler1 = SoldhouseCrawler()
-    _crawler1.crawl_sold_house('vic',mode='CONTINUE',excluderegion='Abbotsford')
+    _crawler1.crawl_sold_house('vic',mode='FULL')
     #TODO exclude regions if 300 entries are existed in CONTINUE Mode, and how to process crawler in different mode
     #TODO using proxy and change IP address when error occures

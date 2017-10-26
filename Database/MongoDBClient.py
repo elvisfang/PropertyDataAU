@@ -33,6 +33,18 @@ class MongodbClient(object):
     def set_collection_name(self, collectionname):
         self.__collectionname = collectionname
 
+    def remove_all_from_collection(self,collectionname):
+        try:
+            if collectionname == ():
+                collection = self.__client[self.__dbname][self.__collectionname]
+            else:
+                collection = self.__client[self.__dbname][collectionname]
+            collection.remove({})
+            return True
+        except errors.PyMongoError as e:
+            logger.log_to_file('MongoError.log', e.reason.strerror)
+            self.__client.close()
+
     def get_one_value_by_key(self,filter,*collectionname):
         if not isinstance(filter,dict):
             raise TypeError('filter must be a dir with key:keyname')
@@ -67,6 +79,17 @@ class MongodbClient(object):
             except errors.PyMongoError as e:
                 logger.log_to_file('MongoError.log', e.reason.strerror)
                 self.__client.close()
+
+    def return_random_record(self,collectionname):
+        try:
+            if collectionname == ():
+                collection = self.__client[self.__dbname][self.__collectionname]
+            else:
+                collection = self.__client[self.__dbname][collectionname]
+            return list(collection.aggregate([{'$sample':{'size':1}}])) #return a radmon cursor and convert to list
+        except errors.PyMongoError as e:
+            logger.log_to_file('MongoError.log', e.reason.strerror)
+            self.__client.close()
 
     def close_bd(self):
         self.__client.close()

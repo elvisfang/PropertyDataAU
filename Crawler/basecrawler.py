@@ -12,6 +12,7 @@
 """
 __author__ = 'elvisfang'
 from Database import MongoDBClient
+from ProxyPool import PorxySpider
 from urllib import request
 from urllib import parse
 from urllib import error
@@ -25,9 +26,9 @@ class BaseCrawler(object):
     __crawl_url = ''
     __proxy_enabled = False
 
-    def __init__(self, crawl_url ='', proxy_enable=False):
+    def __init__(self, crawl_url ='', proxy_enabled=False):
         self.__crawl_url = crawl_url
-        self.__proxy_enabled = proxy_enable
+        self.__proxy_enabled = proxy_enabled
 
     @property
     def crawl_url(self):
@@ -36,6 +37,14 @@ class BaseCrawler(object):
     @crawl_url.setter
     def crawl_url(self,url):
         self.__crawl_url = url
+
+    @property
+    def proxy_enabled(self):
+        return self.proxy_enabled
+
+    @proxy_enabled.setter
+    def proxy_enabled(self,proxy_enabled):
+        self.__proxy_enabled = proxy_enabled
 
     @staticmethod
     def load_region_list(state):
@@ -50,7 +59,9 @@ class BaseCrawler(object):
 
         # User-Agent
         if self.__proxy_enabled:
-            proxy = {'http': '113.121.188.81:808'}
+            proxy_ip = PorxySpider.GetRandomProxy()
+            print('using proxy' + proxy_ip)
+            proxy = {proxy_ip['Type']: proxy_ip['IP'] + ':' + proxy_ip['Port']}
             proxy_support = request.ProxyHandler(proxy)
             opener = request.build_opener(proxy_support)
             request.install_opener(opener)
@@ -105,7 +116,7 @@ class BaseCrawler(object):
                     return soup
 
 if __name__ == "__main__":
-    crawler = BaseCrawler('http://house.ksou.cn/p.php')
+    crawler = BaseCrawler('http://house.ksou.cn/p.php',proxy_enabled=True)
     Query_String = {}
     Query_String['q'] = 'Toorak'
     Query_String['p'] = '3'
