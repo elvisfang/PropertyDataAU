@@ -156,21 +156,29 @@ class SoldhouseCrawler():
     def crawl_sold_house(self,state,mode='CONTINUE',excluderegion=''):
         _region_list = self.__crawler.load_region_list(state)
         _excludelist = excluderegion
+        #create a new crawler to fro detail data
         _crawler = basecrawler.BaseCrawler()
+        #-------------------
+        # set both crawler proxy enabled
         _crawler.proxy_enabled = True
+        self.__crawler.proxy_enabled = True
+        #------------------
+        #new collction for detail property
         _mongoclient = MongoDBClient.MongodbClient('PropertyDetails')
         for _region in _region_list:
             if _region in _excludelist:
                 continue
             for i in range(30):
                 _query = self.__generate_query_string(_region,i,_region,state)
-                _bs_searchresult = self.__crawler.crawl_data(**_query)
+                #_bs_searchresult = self.__crawler.crawl_data(**_query)
+                _bs_searchresult = self.__crawler.requests_crawl_data(**_query)
                 for addr in _bs_searchresult.find_all('span', class_='addr'):
                     _crawler.crawl_url = self.__crawl_url + addr.a.get('href')[5:]
                     try:
                         if mode == 'FULL' or \
                                 (mode == 'CONTINUE' and (not _mongoclient.get_one_value_by_key({'URL':_crawler.crawl_url}))):
-                            _bs_detailinfo = _crawler.crawl_data()
+                            #_bs_detailinfo = _crawler.crawl_data()
+                            _bs_detailinfo = _crawler.requests_crawl_data()
                             _house_data = self.__absctract_house_info(_bs_detailinfo)
                             _house_data['State'] = state
                             _house_data['Region'] = _region
@@ -179,7 +187,7 @@ class SoldhouseCrawler():
                             _mongoclient.update_one_record({'Addr':_house_data['Addr']},_house_data,'PropertyDetails')
                             # sleep 2 second
                             time.sleep(2)
-                            print('save data' + _house_data['URL'])
+                            print('save data:' + _house_data['URL'])
                         else:
                             print(_crawler.crawl_url + 'existed')
                     except BaseException as e:

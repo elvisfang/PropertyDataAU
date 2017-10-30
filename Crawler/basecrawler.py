@@ -18,6 +18,7 @@ from urllib import parse
 from urllib import error
 from bs4 import BeautifulSoup
 from Log import logger
+import requests
 import time
 
 
@@ -40,7 +41,7 @@ class BaseCrawler(object):
 
     @property
     def proxy_enabled(self):
-        return self.proxy_enabled
+        return self.__proxy_enabled
 
     @proxy_enabled.setter
     def proxy_enabled(self,proxy_enabled):
@@ -53,15 +54,56 @@ class BaseCrawler(object):
         _mongoclient.close_bd()
         return _regionlist['region']
 
+    #using requests lib to crawl data
+    def requests_crawl_data(self,**query_string):
+        if self.__crawl_url == '':
+            raise BaseException('__crawl_url of basecrawler is null')
+
+        #set proxy
+        _proxies = {}
+        if self.__proxy_enabled:
+            _proxy_ip = PorxySpider.GetRandomProxy()
+            _proxies['http'] = 'http://' +  _proxy_ip['IP'] + ':' + _proxy_ip['Port']
+            print('using proxy' + _proxy_ip['Type'] + ':' + _proxy_ip['IP'] + ':' + _proxy_ip['Port'])
+
+        _headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Connection": "keep-alive",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 Firefox/39.0"
+        }
+        try:
+            if not query_string == {}:
+                _response = requests.get(self.__crawl_url, headers=_headers, timeout=10, proxies=_proxies,params=query_string)
+            else:
+                _response = requests.get(self.__crawl_url, headers=_headers, timeout=10, proxies=_proxies)
+        except requests.exceptions.ReadTimeout as e:
+            logger.log_to_file('CrawlerError.log',
+                               'Basecrawler Requests Time out Error:' + str(e.args[0]) + ' processing:' + self.__crawl_url + '\n')
+        except requests.exceptions.ConnectionError as e:
+            logger.log_to_file('CrawlerError.log',
+                                'Basecrawler Requests Connection Error:' + str(e.args[0]) + ' processing:' + self.__crawl_url + '\n')
+        except requests.exceptions.RequestException as e:
+            logger.log_to_file('CrawlerError.log',
+                                'Basecrawler Requests RequestException:' + str(e.args[0]) + ' processing:' + self.__crawl_url + '\n')
+        else:
+            _html = _response.content.decode('utf-8')
+            _soup = BeautifulSoup(_html, 'lxml')
+            return _soup
+
+
+    #using urllib to crawl data
     def crawl_data(self, **query_string):
         if self.__crawl_url == '':
             raise BaseException('__crawl_url of basecrawler is null')
 
-        # User-Agent
+        #set proxy
         if self.__proxy_enabled:
             proxy_ip = PorxySpider.GetRandomProxy()
-            print('using proxy' + proxy_ip)
+            print('using proxy' + proxy_ip['Type'] + ':' +proxy_ip['IP'] + ':' + proxy_ip['Port'])
             proxy = {proxy_ip['Type']: proxy_ip['IP'] + ':' + proxy_ip['Port']}
+            #proxy = {proxy_ip['Type']: proxy_ip['IP'] + ':222'}
             proxy_support = request.ProxyHandler(proxy)
             opener = request.build_opener(proxy_support)
             request.install_opener(opener)
@@ -76,6 +118,7 @@ class BaseCrawler(object):
         # _head['Host'] = 'house.ksou.cn'
         # _head['Upgrade-Insecure-Requests'] = '1'
         #_head['Cookie']='u=0815130798178353; __utmt=1; c_sta=vic; __utma=119194128.1000365510.1500881922.1502697441.1502761970.10; __utmb=119194128.22.10.1502761970; __utmc=119194128; __utmz=119194128.1500881923.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)'
+
 
         _target_req = request.Request(url=self.__crawl_url, headers=_head)
         _sleep = 200
@@ -116,25 +159,28 @@ class BaseCrawler(object):
                     return soup
 
 if __name__ == "__main__":
-    crawler = BaseCrawler('http://house.ksou.cn/p.php',proxy_enabled=True)
-    Query_String = {}
-    Query_String['q'] = 'Toorak'
-    Query_String['p'] = '3'
-    Query_String['s'] = 1
-    Query_String['st'] = ''
-    Query_String['type'] = ''
-    Query_String['count'] = '300'
-    Query_String['region'] = 'Toorak'
-    Query_String['lat'] = '0'
-    Query_String['lng'] = '0'
-    Query_String['sta'] = 'vic'
-    Query_String['htype'] = ''
-    Query_String['agent'] = '0'
-    Query_String['minprice'] = '0'
-    Query_String['maxprice'] = '0'
-    Query_String['minned'] = '0'
-    Query_String['maxbed'] = '0'
-    Query_String['minland'] = '0'
-    Query_String['maxland'] = '0'
-    s = crawler.crawl_data(**Query_String)
+    #test if proxy enabled
+    crawler = BaseCrawler('http://house.ksou.cn/p.php?q=Abbotsford&p=0&s=1&st=&type=&count=300&region=Abbotsford&lat=0&lng=0&sta=vic&htype=&agent=0&minprice=0&maxprice=0&minned=0&maxbed=0&minland=0&maxland=0',proxy_enabled=True)
+    # Query_String = {}
+    # Query_String['q'] = 'Toorak'
+    # Query_String['p'] = '3'
+    # Query_String['s'] = 1
+    # Query_String['st'] = ''
+    # Query_String['type'] = ''
+    # Query_String['count'] = '300'
+    # Query_String['region'] = 'Toorak'
+    # Query_String['lat'] = '0'
+    # Query_String['lng'] = '0'
+    # Query_String['sta'] = 'vic'
+    # Query_String['htype'] = ''
+    # Query_String['agent'] = '0'
+    # Query_String['minprice'] = '0'
+    # Query_String['maxprice'] = '0'
+    # Query_String['minned'] = '0'
+    # Query_String['maxbed'] = '0'
+    # Query_String['minland'] = '0'
+    # Query_String['maxland'] = '0'
+    #s = crawler.crawl_data(**Query_String)
+    #s = crawler.crawl_data()
+    s=crawler.requests_crawl_data()
     print(s)
